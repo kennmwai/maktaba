@@ -1,0 +1,31 @@
+package com.ken.maktaba.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+public class UpdateBookRequestDTO {
+    @NotBlank(message = "Title is required")
+    @Size(max = 255, message = "Title cannot be longer than 255 characters")
+    private String title;
+
+    @NotBlank(message = "Author is required")
+    @Size(max = 255, message = "Author name cannot be longer than 255 characters")
+    private String author;
+
+    @NotBlank(message = "ISBN is required")
+    @Size(max = 20, message = "ISBN cannot be longer than 20 characters")
+    private String isbn;
+
+    @NotNull(message = "Publication year is required")
+    @Positive(message = "Publication year must be a positive number")
+    private Integer publicationYear;
+
+    @Size(max = 1000, message = "Description cannot be longer than 1000 characters")
+    private String description;
+}
