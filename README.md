@@ -70,8 +70,16 @@ ai.api.url=your_openai_compatible_api_url_here
 ## Design Decisions
 
 - **Spring Boot**: Chosen for its simplicity and ease of integration with various components.
-- **Maven**: Selected as the build tool for its robust dependency management and compatibility with Spring Boot.
-- **Swagger/OpenAPI**: Integrated for easy API documentation and testing using the `springdoc-openapi` library. This library helps to automate the generation of API documentation by examining the application at runtime to infer API semantics based on Spring configurations, class structure, and various annotations. It supports OpenAPI 3, Spring Boot v3 (Java 17 & Jakarta EE 9), JSR-303, Swagger-ui, OAuth 2, and GraalVM native images.
+- **Maven**: Selected as the build tool for its robust dependency management and compatibility with Spring Boot. It simplifies the build process and dependency management.
+- **Spring Boot Actuator**: Included for monitoring and managing the application. Provides production-ready features such as metrics, health checks, and monitoring.
+- **Spring Data JPA**: Used for data access and ORM. Simplifies database interactions and provides a robust repository abstraction.
+- **H2 Database**: Chosen for in-memory database support during development. Helps in quick prototyping and testing.
+- **Spring Boot Validation**: Used for validating request parameters and entities. Ensures data integrity and consistency.
+- **Spring Boot Web**: Included for building the web layer of the application. Provides a comprehensive stack for developing web applications.
+- **Springdoc OpenAPI**: Integrated for easy API documentation and testing using the `springdoc-openapi` library. This library helps to automate the generation of API documentation by examining the application at runtime to infer API semantics based on Spring configurations, class structure, and various annotations. It supports OpenAPI 3, Spring Boot v3 (Java 17 & Jakarta EE 9), JSR-303, Swagger-ui, OAuth 2, and GraalVM native images.
+- **Lombok**: Used to reduce boilerplate code through annotations. Simplifies the codebase by generating getters, setters, constructors, and other methods.
+- **Spring Boot DevTools**: Included to enhance the development experience. Provides features like automatic restarts, live reload, and configurations for improved development workflow.
+- **Spring Boot Starter Test**: Used for unit and integration testing. Provides a comprehensive testing framework with JUnit, Mockito, and other testing libraries.
 - **AI Integration**: Uses an AI API for providing insights, with flexible configuration options for different AI providers.
 
 ## Maktaba-UI
