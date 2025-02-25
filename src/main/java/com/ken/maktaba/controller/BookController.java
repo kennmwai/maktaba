@@ -15,12 +15,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ken.maktaba.entity.Book;
+import com.ken.maktaba.entity.Insights;
 import com.ken.maktaba.service.BookService;
 
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/v1/books")
+@RequestMapping("/books")
 public class BookController {
 	private final BookService bookService;
 
@@ -40,9 +41,21 @@ public class BookController {
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
 
+	@GetMapping("/{id}")
+	public ResponseEntity<Book> getBookById(@PathVariable Long id) {
+		Book book = bookService.getBookById(id);
+		return new ResponseEntity<>(book, HttpStatus.OK);
+	}
+
+	@PutMapping("/{id}")
+	public ResponseEntity<Book> updateBook(@PathVariable Long id, @Valid @RequestBody Book book) {
+		Book updatedBook = bookService.updateBook(id, book);
+		return new ResponseEntity<>(updatedBook, HttpStatus.OK);
+	}
+
 	@GetMapping("/{id}/ai-insights")
-	public ResponseEntity<String> getAiInsights(@PathVariable Long id) {
-		String aiInsights = bookService.getAiInsights(id);
+	public ResponseEntity<Insights> getAiInsights(@PathVariable Long id) {
+		Insights aiInsights = bookService.getBookInsights(id);
 		return new ResponseEntity<>(aiInsights, HttpStatus.OK);
 	}
 
@@ -52,23 +65,15 @@ public class BookController {
 		return new ResponseEntity<>(books, HttpStatus.OK);
 	}
 
-	@GetMapping("/{id}")
-	public ResponseEntity<Book> getBookById(@PathVariable Long id) {
-		Book book = bookService.getBookById(id);
-		return new ResponseEntity<>(book, HttpStatus.OK);
-	}
-
 	@GetMapping("/search")
-	public ResponseEntity<List<Book>> searchBooks(@RequestParam(value = "title", required = false) String title,
-			@RequestParam(value = "author", required = false) String author) {
-		List<Book> books = bookService.searchBooks(title, author);
-		return new ResponseEntity<>(books, HttpStatus.OK);
-	}
+	public ResponseEntity<List<Book>> searchBooks(
+			@RequestParam(value = "title", required = false) String title,
+			@RequestParam(value = "author", required = false) String author,
+			@RequestParam(value = "isbn", required = false) String isbn,
+			@RequestParam(value = "q", required = false) String query) {
 
-	@PutMapping("/{id}")
-	public ResponseEntity<Book> updateBook(@PathVariable Long id, @Valid @RequestBody Book book) {
-		Book updatedBook = bookService.updateBook(id, book);
-		return new ResponseEntity<>(updatedBook, HttpStatus.OK);
+		List<Book> books = bookService.searchBooks(title, author, isbn, query);
+		return new ResponseEntity<>(books, HttpStatus.OK);
 	}
 
 }
