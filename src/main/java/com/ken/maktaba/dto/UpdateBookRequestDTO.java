@@ -1,5 +1,7 @@
 package com.ken.maktaba.dto;
 
+import org.hibernate.validator.constraints.URL;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -28,4 +30,8 @@ public class UpdateBookRequestDTO {
 
     @Size(max = 1000, message = "Description cannot be longer than 1000 characters")
     private String description;
+
+    @Size(max = 2048, message = "Image URL cannot be longer than 2048 characters")
+    @URL(message = "Image URL must be a valid URL") // TODO: Add URL validation
+    private String imageUrl;
 }
