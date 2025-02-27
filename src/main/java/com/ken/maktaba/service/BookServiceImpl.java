@@ -2,21 +2,28 @@ package com.ken.maktaba.service;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ken.maktaba.dto.BookDTO;
 import com.ken.maktaba.dto.ChatCompletionRequest;
+import com.ken.maktaba.dto.CreateBookRequestDTO;
 import com.ken.maktaba.dto.MessageDto;
+import com.ken.maktaba.dto.UpdateBookRequestDTO;
 import com.ken.maktaba.entity.Book;
 import com.ken.maktaba.entity.InsightStatus;
 import com.ken.maktaba.entity.Insights;
 import com.ken.maktaba.exception.AiApiException;
 import com.ken.maktaba.exception.ResourceNotFoundException;
+import com.ken.maktaba.mapper.BookMapper;
 import com.ken.maktaba.repository.BookRepository;
 import com.ken.maktaba.repository.InsightsRepository;
 import com.ken.maktaba.util.AIService;
@@ -31,68 +38,83 @@ public class BookServiceImpl implements BookService {
 	private final BookRepository bookRepository;
 	private final InsightsRepository insightsRepository;
 	private final AIService aiService;
+	private final BookMapper bookMapper;
 
-	public BookServiceImpl(BookRepository bookRepository, InsightsRepository insightsRepository, AIService aiService) {
-		this.bookRepository = bookRepository;
-		this.insightsRepository = insightsRepository;
-		this.aiService = aiService;
+	public BookServiceImpl(BookRepository bookRepository, InsightsRepository insightsRepository, AIService aiService, BookMapper bookMapper) {
+        this.bookRepository = bookRepository;
+        this.insightsRepository = insightsRepository;
+        this.aiService = aiService;
+        this.bookMapper = bookMapper;
 	}
 
 	@Override
-	public Book createBook(Book book) {
-		return bookRepository.save(book);
+	public BookDTO createBook(CreateBookRequestDTO createBookRequestDTO) {
+		Book book = bookMapper.toEntity(createBookRequestDTO);
+		Book savedBook = bookRepository.save(book);
+		return bookMapper.toDTO(savedBook);
 	}
 
 	@Override
 	public void deleteBook(Long id) {
-		Book book = getBookById(id);
+		Book book = getBookByIdEntity(id);
 		bookRepository.delete(book);
 	}
 
 	@Override
-	public List<Book> getAllBooks() {
-		return bookRepository.findAll();
+	public Page<BookDTO> getAllBooks(Pageable pageable) {
+		Page<Book> bookPage = bookRepository.findAll(pageable);
+		return bookPage.map(bookMapper::toDTO);
 	}
 
 	@Override
-	public Book getBookById(Long id) {
+	public BookDTO getBookById(Long id) {
+		Book book = getBookByIdEntity(id);
+		return bookMapper.toDTO(book);
+	}
+
+	// Helper method to get Book entity by ID
+	private Book getBookByIdEntity(Long id) {
 		return bookRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + id));
 	}
 
 	@Override
-	public List<Book> searchBooks(String title, String author, String isbn, String query) {
+	public List<BookDTO> searchBooks(String title, String author, String isbn, String query) {
+		List<Book> books;
 		if (query != null && !query.isEmpty()) {
-			return bookRepository.searchBooksByKeyword(query);
+			books = bookRepository.searchBooksByKeyword(query);
 		} else if (isbn != null && !isbn.isEmpty()) {
-			return bookRepository.findByIsbn(isbn);
+			books = bookRepository.findByIsbn(isbn);
 		} else if (title != null || author != null) {
-			return bookRepository.searchBooksByTitleAndAuthor(title, author);
+			books = bookRepository.searchBooksByTitleAndAuthor(title, author);
 		} else {
-			return getAllBooks();
+			books = getAllBooksWithoutPagination();
+
 		}
+		return books.stream().map(bookMapper::toDTO).collect(Collectors.toList());
+	}
+
+	// Helper method to get all books without pagination (used for search fallback)
+	private List<Book> getAllBooksWithoutPagination() {
+		return bookRepository.findAll();
 	}
 
 	@Override
-	public Book updateBook(Long id, Book book) {
-		Book existingBook = getBookById(id);
-		existingBook.setTitle(book.getTitle());
-		existingBook.setAuthor(book.getAuthor());
-		existingBook.setIsbn(book.getIsbn());
-		existingBook.setPublicationYear(book.getPublicationYear());
-		existingBook.setDescription(book.getDescription());
-		return bookRepository.save(existingBook);
+	public BookDTO updateBook(Long id, UpdateBookRequestDTO updateBookRequestDTO) {
+		Book existingBook = getBookByIdEntity(id);
+		Book updatedBook = bookMapper.toEntity(updateBookRequestDTO, existingBook);
+		Book savedBook = bookRepository.save(updatedBook);
+		return bookMapper.toDTO(savedBook);
 	}
 
 	@Override
 	public Insights getBookInsights(Long bookId) {
-		Book book = bookRepository.findById(bookId)
-				.orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
+		Book book = getBookByIdEntity(bookId);
 
 		Insights insights = insightsRepository.findByBookId(bookId).orElseGet(() -> {
 			Insights newInsights = new Insights();
 			newInsights.setBook(book);
-			return insightsRepository.saveAndFlush(newInsights); // Ensure immediate persistence
+			return insightsRepository.saveAndFlush(newInsights);
 		});
 
 		if (insights.getAiInsights() == null) {
@@ -103,7 +125,7 @@ public class BookServiceImpl implements BookService {
 	}
 
 	@Async
-	@Transactional(propagation = Propagation.REQUIRES_NEW) // Isolate async transaction
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public CompletableFuture<Void> generateAIInsightsAsync(Long insightsId) {
 		try {
 			Insights insights = insightsRepository.findById(insightsId)

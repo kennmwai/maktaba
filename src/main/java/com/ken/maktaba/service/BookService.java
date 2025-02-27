@@ -2,21 +2,26 @@ package com.ken.maktaba.service;
 
 import java.util.List;
 
-import com.ken.maktaba.entity.Book;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import com.ken.maktaba.dto.BookDTO;
+import com.ken.maktaba.dto.CreateBookRequestDTO;
+import com.ken.maktaba.dto.UpdateBookRequestDTO;
 import com.ken.maktaba.entity.Insights;
 
 public interface BookService {
-	Book createBook(Book book);
+	BookDTO createBook(CreateBookRequestDTO createBookRequestDTO);
 
 	void deleteBook(Long id);
 
-	List<Book> getAllBooks();
+	Page<BookDTO> getAllBooks(Pageable pageable);
 
-	Book getBookById(Long id);
+	BookDTO getBookById(Long id);
 
-	List<Book> searchBooks(String title, String author, String isbn, String query);
+	List<BookDTO> searchBooks(String title, String author, String isbn, String query);
 
-	Book updateBook(Long id, Book book);
+	BookDTO updateBook(Long id, UpdateBookRequestDTO updateBookRequestDTO);
 
 	Insights getBookInsights(Long bookId);
 }

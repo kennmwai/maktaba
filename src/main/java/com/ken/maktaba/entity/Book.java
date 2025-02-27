@@ -1,5 +1,7 @@
 package com.ken.maktaba.entity;
 
+import org.hibernate.validator.constraints.URL;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -43,4 +45,7 @@ public class Book {
 	@Size(max = 1000, message = "Description cannot be longer than 1000 characters")
 	private String description;
 
+    @Size(max = 2048, message = "Image URL cannot be longer than 2048 characters")
+    @URL(message = "Image URL must be a valid URL") // TODO: Add URL validation
+    private String imageUrl;
 }

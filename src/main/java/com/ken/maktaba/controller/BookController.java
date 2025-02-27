@@ -2,6 +2,9 @@ package com.ken.maktaba.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,8 +17,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ken.maktaba.entity.Book;
+import com.ken.maktaba.dto.BookDTO;
+import com.ken.maktaba.dto.CreateBookRequestDTO;
+import com.ken.maktaba.dto.UpdateBookRequestDTO;
 import com.ken.maktaba.entity.Insights;
+import com.ken.maktaba.mapper.BookMapper;
 import com.ken.maktaba.service.BookService;
 
 import jakarta.validation.Valid;
@@ -24,15 +30,17 @@ import jakarta.validation.Valid;
 @RequestMapping("/books")
 public class BookController {
 	private final BookService bookService;
+	private final BookMapper bookMapper;
 
-	public BookController(BookService bookService) {
+	public BookController(BookService bookService, BookMapper bookMapper) {
 		this.bookService = bookService;
+		this.bookMapper = bookMapper;
 	}
 
 	@PostMapping
-	public ResponseEntity<Book> createBook(@Valid @RequestBody Book book) {
-		Book savedBook = bookService.createBook(book);
-		return new ResponseEntity<>(savedBook, HttpStatus.CREATED);
+	public ResponseEntity<BookDTO> createBook(@Valid @RequestBody CreateBookRequestDTO createBookRequestDTO) {
+		BookDTO savedBookDTO = bookService.createBook(createBookRequestDTO);
+		return new ResponseEntity<>(savedBookDTO, HttpStatus.CREATED);
 	}
 
 	@DeleteMapping("/{id}")
@@ -42,15 +50,16 @@ public class BookController {
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<Book> getBookById(@PathVariable Long id) {
-		Book book = bookService.getBookById(id);
-		return new ResponseEntity<>(book, HttpStatus.OK);
+	public ResponseEntity<BookDTO> getBookById(@PathVariable Long id) {
+		BookDTO bookDTO = bookService.getBookById(id);
+		return new ResponseEntity<>(bookDTO, HttpStatus.OK);
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<Book> updateBook(@PathVariable Long id, @Valid @RequestBody Book book) {
-		Book updatedBook = bookService.updateBook(id, book);
-		return new ResponseEntity<>(updatedBook, HttpStatus.OK);
+	public ResponseEntity<BookDTO> updateBook(@PathVariable Long id,
+			@Valid @RequestBody UpdateBookRequestDTO updateBookRequestDTO) {
+		BookDTO updatedBookDTO = bookService.updateBook(id, updateBookRequestDTO);
+		return new ResponseEntity<>(updatedBookDTO, HttpStatus.OK);
 	}
 
 	@GetMapping("/{id}/ai-insights")
@@ -59,21 +68,21 @@ public class BookController {
 		return new ResponseEntity<>(aiInsights, HttpStatus.OK);
 	}
 
-	@GetMapping
-	public ResponseEntity<List<Book>> getAllBooks() {
-		List<Book> books = bookService.getAllBooks();
-		return new ResponseEntity<>(books, HttpStatus.OK);
+	@GetMapping // Updated to handle pagination and return DTOs
+	public ResponseEntity<Page<BookDTO>> getAllBooks(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size) {
+		Pageable pageable = PageRequest.of(page, size);
+		Page<BookDTO> booksPage = bookService.getAllBooks(pageable);
+		return new ResponseEntity<>(booksPage, HttpStatus.OK);
 	}
 
-	@GetMapping("/search")
-	public ResponseEntity<List<Book>> searchBooks(
-			@RequestParam(value = "title", required = false) String title,
+	@GetMapping("/search") // Updated to return DTOs
+	public ResponseEntity<List<BookDTO>> searchBooks(@RequestParam(value = "title", required = false) String title,
 			@RequestParam(value = "author", required = false) String author,
 			@RequestParam(value = "isbn", required = false) String isbn,
 			@RequestParam(value = "q", required = false) String query) {
 
-		List<Book> books = bookService.searchBooks(title, author, isbn, query);
-		return new ResponseEntity<>(books, HttpStatus.OK);
+		List<BookDTO> booksDTO = bookService.searchBooks(title, author, isbn, query);
+		return new ResponseEntity<>(booksDTO, HttpStatus.OK);
 	}
-
 }
